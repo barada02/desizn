@@ -66,6 +66,15 @@ export interface LiftingLineSolution {
   perAlpha: number[]
   /** Fourier coefficients produced by twist and camber alone */
   fromShape: number[]
+  /**
+   * sin(n * theta_k) for every station and harmonic, laid out row-major.
+   * The factorisation has to compute these anyway to build the matrix, so
+   * keeping them turns each later evaluation into multiply-adds instead of
+   * a fresh grid of transcendental calls.
+   */
+  sinTable: Float64Array
+  /** sin(n * pi/2), for the centreline reference the load is normalised to */
+  sinRoot: Float64Array
 }
 
 export interface SpanStation {
@@ -185,6 +194,7 @@ export function factorLiftingLine(
   const matrix: number[][] = []
   const rhsAlpha: number[] = []
   const rhsShape: number[] = []
+  const sinTable = new Float64Array(n * n)
 
   for (let k = 1; k <= n; k++) {
     const theta = (k * Math.PI) / (n + 1)
@@ -199,10 +209,13 @@ export function factorLiftingLine(
 
     const row = new Array<number>(n)
     const chordTerm = (4 * span) / (section.liftSlope * chord)
+    const rowOffset = (k - 1) * n
 
     for (let j = 0; j < n; j++) {
       const order = j + 1
-      row[j] = Math.sin(order * theta) * (chordTerm + order / sinTheta)
+      const sinNTheta = Math.sin(order * theta)
+      sinTable[rowOffset + j] = sinNTheta
+      row[j] = sinNTheta * (chordTerm + order / sinTheta)
     }
 
     matrix.push(row)
@@ -223,6 +236,8 @@ export function factorLiftingLine(
     chords,
     perAlpha: luSolve(lu, pivot, rhsAlpha),
     fromShape: luSolve(lu, pivot, rhsShape),
+    sinTable,
+    sinRoot: Float64Array.from({ length: n }, (_, j) => Math.sin(((j + 1) * Math.PI) / 2)),
   }
 }
 
@@ -234,7 +249,8 @@ export function atAlpha(
   solution: LiftingLineSolution,
   alpha: number,
 ): LiftingLineResult {
-  const { perAlpha, fromShape, aspectRatio, thetas, ys, chords, halfSpan } = solution
+  const { perAlpha, fromShape, aspectRatio, ys, chords, halfSpan, sinTable, sinRoot } =
+    solution
   const n = perAlpha.length
 
   const alphaRad = alpha * DEG
@@ -262,17 +278,19 @@ export function atAlpha(
   const zeroLiftAlpha =
     Math.abs(perAlpha[0]) > 1e-12 ? -(fromShape[0] / perAlpha[0]) / DEG : 0
 
-  const gammaAt = (theta: number): number => {
-    let sum = 0
-    for (let j = 0; j < n; j++) sum += coefficients[j] * Math.sin((j + 1) * theta)
-    return 2 * solution.span * sum
-  }
+  const twoSpan = 2 * solution.span
 
-  const rootGamma = gammaAt(Math.PI / 2)
-  const stations: SpanStation[] = thetas.map((theta, k) => {
-    const y = ys[k]
+  let rootSum = 0
+  for (let j = 0; j < n; j++) rootSum += coefficients[j] * sinRoot[j]
+  const rootGamma = twoSpan * rootSum
+
+  const stations: SpanStation[] = ys.map((y, k) => {
     const chord = chords[k]
-    const gamma = gammaAt(theta)
+    const offset = k * n
+
+    let sum = 0
+    for (let j = 0; j < n; j++) sum += coefficients[j] * sinTable[offset + j]
+    const gamma = twoSpan * sum
     const eta = y / halfSpan
 
     return {

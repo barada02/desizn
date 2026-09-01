@@ -9,8 +9,14 @@
 
 import { atmosphere, dynamicPressure, reynolds, type Atmosphere } from './atmosphere'
 import { dragBuildup, type DragBuildup } from './drag'
-import { solveWing, type SpanStation } from './llt'
+import {
+  atAlpha,
+  factorWing,
+  type LiftingLineSolution,
+  type SpanStation,
+} from './llt'
 import { DEG, type AircraftParams } from './params'
+import { LINEAR_SECTION_CL_LIMIT } from './polar'
 import { planform, thicknessRatio, wingLoading, type Planform } from './planform'
 
 export interface AeroResults {
@@ -49,18 +55,29 @@ export interface AeroResults {
   zeroLiftAlpha: number
   /** True when the wing is making at least the lift it needs to fly level */
   sustainsLevelFlight: boolean
+  /** Highest section lift coefficient anywhere on the span */
+  maxSectionCl: number
+  /** True where the linear theory behind these numbers can no longer be trusted */
+  beyondLinear: boolean
 
   stations: SpanStation[]
 }
 
-export function evaluate(params: AircraftParams): AeroResults {
+/**
+ * Evaluate a wing that has already been factored. The store uses this so one
+ * factorisation feeds both the results and the whole drag polar.
+ */
+export function evaluateWith(
+  solution: LiftingLineSolution,
+  params: AircraftParams,
+): AeroResults {
   const { wing, operating } = params
 
   const geometry = planform(wing)
   const air = atmosphere(operating.altitude)
   const q = dynamicPressure(air.density, operating.speed)
 
-  const lifting = solveWing(wing, operating)
+  const lifting = atAlpha(solution, operating.alpha)
 
   const drag = dragBuildup({
     reynolds: reynolds(air, operating.speed, geometry.mac),
@@ -74,6 +91,12 @@ export function evaluate(params: AircraftParams): AeroResults {
   const dragForce = q * geometry.area * drag.cd
   const weight = operating.mass * 9.80665
   const clRequired = weight / (q * geometry.area)
+
+  let maxSectionCl = 0
+  for (const station of lifting.stations) {
+    const magnitude = Math.abs(station.cl)
+    if (magnitude > maxSectionCl) maxSectionCl = magnitude
+  }
 
   // C_L is affine in alpha, so the angle that delivers a given C_L is exact
   // rather than something to iterate towards.
@@ -98,6 +121,12 @@ export function evaluate(params: AircraftParams): AeroResults {
     alphaForLevelFlight,
     zeroLiftAlpha: lifting.zeroLiftAlpha,
     sustainsLevelFlight: lift >= weight,
+    maxSectionCl,
+    beyondLinear: maxSectionCl > LINEAR_SECTION_CL_LIMIT,
     stations: lifting.stations,
   }
+}
+
+export function evaluate(params: AircraftParams): AeroResults {
+  return evaluateWith(factorWing(params.wing), params)
 }
