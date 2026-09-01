@@ -12,6 +12,20 @@ describe('designStore', () => {
     expect(store().results.cl).toBeGreaterThan(0)
   })
 
+  it('produces a polar alongside the point results', () => {
+    expect(store().polar.points.length).toBeGreaterThan(20)
+    expect(store().polar.current.alpha).toBe(DEFAULT_PARAMS.operating.alpha)
+    expect(store().polar.current.cl).toBeCloseTo(store().results.cl, 12)
+  })
+
+  it('keeps the polar in step with the parameters', () => {
+    const before = store().polar.bestLiftToDrag.liftToDrag
+    store().setWing({ span: 22, rootChord: 0.6 })
+
+    expect(store().polar.bestLiftToDrag.liftToDrag).toBeGreaterThan(before)
+    expect(store().polar.current.cd).toBeCloseTo(store().results.cd, 12)
+  })
+
   it('recomputes results on every change', () => {
     const before = store().results.geometry.aspectRatio
     store().setWing({ span: 20 })
