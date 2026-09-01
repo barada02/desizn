@@ -44,6 +44,15 @@ describe('evaluate', () => {
     expect(r.liftToDrag).toBeLessThan(40)
   })
 
+  it('opens on a design that actually flies', () => {
+    // The app should not greet a newcomer with a warning, so the shipped
+    // defaults have to trim within a whisker of their own incidence.
+    const r = evaluate(DEFAULT_PARAMS)
+
+    expect(r.sustainsLevelFlight).toBe(true)
+    expect(Math.abs(r.alphaForLevelFlight - DEFAULT_PARAMS.operating.alpha)).toBeLessThan(0.5)
+  })
+
   it('scales lift with dynamic pressure and area', () => {
     const r = evaluate(design())
     expect(r.lift).toBeCloseTo(r.dynamicPressure * r.geometry.area * r.cl, 6)

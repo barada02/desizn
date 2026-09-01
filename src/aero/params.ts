@@ -172,9 +172,12 @@ export const DEFAULT_PARAMS: AircraftParams = {
     dihedral: 4,
     naca: '2412',
   },
+  // Chosen so the starting design actually flies: at 55 m/s this wing trims
+  // within a tenth of a degree of its default incidence, so the app opens on a
+  // working aeroplane rather than on a warning.
   operating: {
     alpha: 4,
-    speed: 45,
+    speed: 55,
     altitude: 0,
     mass: 900,
   },
