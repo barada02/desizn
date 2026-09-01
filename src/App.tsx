@@ -1,6 +1,8 @@
+import { SpanLoadChart } from './charts/SpanLoadChart'
 import { Studio } from './scene/Studio'
 import { useDesign } from './state/designStore'
 import { ControlPanel } from './ui/ControlPanel'
+import { Readouts } from './ui/Readouts'
 
 function App() {
   const wing = useDesign((s) => s.params.wing)
@@ -21,8 +23,14 @@ function App() {
       </header>
 
       <div className="main">
-        <div className="viewport">
-          <Studio wing={wing} />
+        <div className="stage">
+          <div className="viewport">
+            <Studio wing={wing} />
+          </div>
+          <div className="results">
+            <SpanLoadChart />
+            <Readouts />
+          </div>
         </div>
         <aside className="sidebar">
           <ControlPanel />

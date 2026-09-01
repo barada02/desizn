@@ -143,10 +143,32 @@ button {
   min-height: 0;
 }
 
+/* The 3D view, with the results it produces docked beneath it. */
+.stage {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+  min-height: 0;
+}
+
 .viewport {
   position: relative;
   min-width: 0;
   background: radial-gradient(circle at 50% 42%, #1a242a 0%, var(--bg) 72%);
+}
+
+.results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 26px;
+  padding: 14px 18px 16px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+}
+
+.results .chart {
+  flex: 1 1 340px;
+  max-width: 520px;
 }
 
 .sidebar {

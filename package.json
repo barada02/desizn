@@ -16,7 +16,6 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "three": "^0.185.1",
-    "uplot": "^1.6.32",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

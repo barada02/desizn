@@ -1,0 +1,123 @@
+/* Summary before detail: four tiles, a verdict, then the supporting numbers. */
+
+.readouts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tile {
+  background: var(--panel);
+  padding: 9px 11px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tile .figure {
+  font-size: 1.32rem;
+  line-height: 1.1;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.tile .sub {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+
+.meter {
+  height: 3px;
+  margin-top: 3px;
+  border-radius: 2px;
+  background: var(--panel-3);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+/* --- verdict ----------------------------------------------------- */
+
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-left-width: 2px;
+  border-radius: 3px;
+  background: var(--panel-2);
+}
+
+.verdict .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.verdict b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.verdict.is-good {
+  border-left-color: var(--good);
+}
+
+.verdict.is-good .dot {
+  background: var(--good);
+}
+
+.verdict.is-warn {
+  border-left-color: var(--warn);
+}
+
+.verdict.is-warn .dot {
+  background: var(--warn);
+}
+
+/* --- detail list -------------------------------------------------- */
+
+.detail {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 2px 16px;
+}
+
+.detail > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.78rem;
+}
+
+.detail dt {
+  color: var(--ink-3);
+}
+
+.detail dd {
+  margin: 0;
+  color: var(--ink-2);
+}
