@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { SECTION_LIFT_SLOPE, sectionProperties } from './airfoil'
-import { solveLiftingLine, solveWing, type LiftingLineInput } from './llt'
+import {
+  atAlpha,
+  factorWing,
+  solveLiftingLine,
+  solveWing,
+  type LiftingLineInput,
+} from './llt'
 import { DEFAULT_PARAMS, type WingParams } from './params'
 import { planform } from './planform'
 
@@ -231,6 +237,34 @@ describe('what the sliders are supposed to teach', () => {
     }
 
     expect(tipOf(-6)).toBeLessThan(tipOf(0))
+  })
+})
+
+describe('reusing one factorisation', () => {
+  it('gives bit-identical results to solving from scratch', () => {
+    // The whole point of splitting factor from evaluate: a polar sweep must not
+    // be an approximation of the per-point solve, it must be the same numbers.
+    const w = wing({ twist: -3, naca: '2412' })
+    const solution = factorWing(w)
+
+    for (const alpha of [-4, 0, 3.5, 8, 15]) {
+      const reused = atAlpha(solution, alpha)
+      const fresh = solveWing(w, { ...DEFAULT_PARAMS.operating, alpha })
+
+      expect(reused.cl).toBe(fresh.cl)
+      expect(reused.cdi).toBe(fresh.cdi)
+      expect(reused.spanEfficiency).toBe(fresh.spanEfficiency)
+      expect(reused.stations.map((s) => s.cl)).toEqual(fresh.stations.map((s) => s.cl))
+    }
+  })
+
+  it('does not let one evaluation disturb the next', () => {
+    const solution = factorWing(wing())
+    const first = atAlpha(solution, 5).cl
+    atAlpha(solution, -3)
+    atAlpha(solution, 12)
+
+    expect(atAlpha(solution, 5).cl).toBe(first)
   })
 })
 

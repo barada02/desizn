@@ -13,11 +13,12 @@
  * Everything worth knowing then falls out of the coefficients: the first one
  * makes all of the lift, and every higher one is wasted energy.
  *
- * The system is linear in the right-hand side, which is worth exploiting. The
- * angle of attack enters the right-hand side as a constant, so we factor the
- * matrix once and solve it twice - once for a unit angle of attack and once for
- * the twist and camber alone. Superposing the two gives the answer at any
- * alpha, and the lift-curve slope exactly rather than by finite difference.
+ * The matrix depends only on the shape of the wing. The angle of attack enters
+ * through the right-hand side alone, so the factorisation is done once and
+ * solved twice - for a unit angle of attack, and for twist and camber alone.
+ * Any angle is then a weighted sum of those two vectors, which is why sweeping
+ * a whole drag polar costs one factorisation rather than one per point, and why
+ * the lift-curve slope is exact rather than a finite difference.
  */
 
 import { sectionProperties, type SectionProperties } from './airfoil'
@@ -29,7 +30,7 @@ import { DEG, type OperatingParams, type WingParams } from './params'
  * can be handed shapes the parameter model cannot express - an elliptical
  * planform, for instance, which is how we check it against theory.
  */
-export interface LiftingLineInput {
+export interface LiftingLineGeometry {
   /** b (m) */
   span: number
   /** S (m^2) */
@@ -40,10 +41,31 @@ export interface LiftingLineInput {
   twist: (y: number) => number
   /** Local section properties */
   section: (y: number) => SectionProperties
-  /** Root angle of attack (deg) */
-  alpha: number
   /** Collocation stations; odd values put one exactly at the root */
   stations?: number
+}
+
+export interface LiftingLineInput extends LiftingLineGeometry {
+  /** Root angle of attack (deg) */
+  alpha: number
+}
+
+/**
+ * A factorised wing: everything that does not depend on angle of attack.
+ * Hand it to `atAlpha` as many times as you like.
+ */
+export interface LiftingLineSolution {
+  span: number
+  area: number
+  aspectRatio: number
+  halfSpan: number
+  thetas: number[]
+  ys: number[]
+  chords: number[]
+  /** Fourier coefficients produced by one radian of angle of attack */
+  perAlpha: number[]
+  /** Fourier coefficients produced by twist and camber alone */
+  fromShape: number[]
 }
 
 export interface SpanStation {
@@ -144,31 +166,36 @@ function luSolve(lu: number[][], pivot: number[], rhs: number[]): number[] {
   return x
 }
 
-export function solveLiftingLine(input: LiftingLineInput): LiftingLineResult {
-  const { span, area } = input
-  const n = input.stations ?? DEFAULT_STATIONS
+/**
+ * Build and factor the system for one wing shape. This is the expensive step -
+ * O(n^3) - and it is entirely independent of angle of attack.
+ */
+export function factorLiftingLine(
+  geometry: LiftingLineGeometry,
+): LiftingLineSolution {
+  const { span, area } = geometry
+  const n = geometry.stations ?? DEFAULT_STATIONS
   const halfSpan = span / 2
   const aspectRatio = (span * span) / area
 
   const thetas: number[] = []
   const ys: number[] = []
-  for (let k = 1; k <= n; k++) {
-    const theta = (k * Math.PI) / (n + 1)
-    thetas.push(theta)
-    ys.push(-halfSpan * Math.cos(theta))
-  }
+  const chords: number[] = []
 
-  // Coefficient matrix, plus the two right-hand sides we superpose later.
   const matrix: number[][] = []
   const rhsAlpha: number[] = []
   const rhsShape: number[] = []
 
-  for (let k = 0; k < n; k++) {
-    const theta = thetas[k]
-    const y = ys[k]
-    const chord = input.chord(y)
-    const section = input.section(y)
+  for (let k = 1; k <= n; k++) {
+    const theta = (k * Math.PI) / (n + 1)
+    const y = -halfSpan * Math.cos(theta)
+    const chord = geometry.chord(y)
+    const section = geometry.section(y)
     const sinTheta = Math.sin(theta)
+
+    thetas.push(theta)
+    ys.push(y)
+    chords.push(chord)
 
     const row = new Array<number>(n)
     const chordTerm = (4 * span) / (section.liftSlope * chord)
@@ -179,16 +206,38 @@ export function solveLiftingLine(input: LiftingLineInput): LiftingLineResult {
     }
 
     matrix.push(row)
-    // alpha_root contributes 1 per unit angle; twist and camber are fixed.
+    // alpha_root contributes one radian per radian; twist and camber are fixed.
     rhsAlpha.push(1)
-    rhsShape.push(input.twist(y) * DEG - section.zeroLiftAlpha)
+    rhsShape.push(geometry.twist(y) * DEG - section.zeroLiftAlpha)
   }
 
   const { lu, pivot } = luDecompose(matrix)
-  const perAlpha = luSolve(lu, pivot, rhsAlpha)
-  const fromShape = luSolve(lu, pivot, rhsShape)
 
-  const alphaRad = input.alpha * DEG
+  return {
+    span,
+    area,
+    aspectRatio,
+    halfSpan,
+    thetas,
+    ys,
+    chords,
+    perAlpha: luSolve(lu, pivot, rhsAlpha),
+    fromShape: luSolve(lu, pivot, rhsShape),
+  }
+}
+
+/**
+ * Evaluate a factorised wing at one angle of attack. Cheap - O(n^2) for the
+ * station loop and nothing worse - so sweeping a polar is close to free.
+ */
+export function atAlpha(
+  solution: LiftingLineSolution,
+  alpha: number,
+): LiftingLineResult {
+  const { perAlpha, fromShape, aspectRatio, thetas, ys, chords, halfSpan } = solution
+  const n = perAlpha.length
+
+  const alphaRad = alpha * DEG
   const coefficients = perAlpha.map((a, i) => alphaRad * a + fromShape[i])
 
   const a1 = coefficients[0]
@@ -216,13 +265,13 @@ export function solveLiftingLine(input: LiftingLineInput): LiftingLineResult {
   const gammaAt = (theta: number): number => {
     let sum = 0
     for (let j = 0; j < n; j++) sum += coefficients[j] * Math.sin((j + 1) * theta)
-    return 2 * span * sum
+    return 2 * solution.span * sum
   }
 
   const rootGamma = gammaAt(Math.PI / 2)
   const stations: SpanStation[] = thetas.map((theta, k) => {
     const y = ys[k]
-    const chord = input.chord(y)
+    const chord = chords[k]
     const gamma = gammaAt(theta)
     const eta = y / halfSpan
 
@@ -251,20 +300,29 @@ export function solveLiftingLine(input: LiftingLineInput): LiftingLineResult {
   }
 }
 
-/** Build the solver input from the studio's parameters and run it. */
-export function solveWing(
-  wing: WingParams,
-  operating: OperatingParams,
-): LiftingLineResult {
+export function solveLiftingLine(input: LiftingLineInput): LiftingLineResult {
+  const { alpha, ...geometry } = input
+  return atAlpha(factorLiftingLine(geometry), alpha)
+}
+
+/** Factor the studio's wing parameters, ready to be evaluated at any angle. */
+export function factorWing(wing: WingParams): LiftingLineSolution {
   const geometry = planform(wing)
   const section = sectionProperties(wing.naca)
 
-  return solveLiftingLine({
+  return factorLiftingLine({
     span: wing.span,
     area: geometry.area,
     chord: (y) => chordAt(wing, y),
     twist: (y) => twistAt(wing, y),
     section: () => section,
-    alpha: operating.alpha,
   })
+}
+
+/** Build the solver input from the studio's parameters and run it. */
+export function solveWing(
+  wing: WingParams,
+  operating: OperatingParams,
+): LiftingLineResult {
+  return atAlpha(factorWing(wing), operating.alpha)
 }
