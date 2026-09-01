@@ -92,7 +92,7 @@ export const WING_BOUNDS: Record<NumericWingKey, ParamBound> = {
     min: 0.2,
     max: 1,
     step: 0.01,
-    help: 'Tip chord over root chord. Around 0.35 to 0.45 the load comes closest to elliptical on an unswept wing.',
+    help: 'Tip chord over root chord. With no twist the load is closest to elliptical near 0.4 - but washout shifts that optimum toward a squarer wing, so set the two together.',
   },
   sweepQuarter: {
     label: 'Sweep',
@@ -110,7 +110,7 @@ export const WING_BOUNDS: Record<NumericWingKey, ParamBound> = {
     min: -8,
     max: 4,
     step: 0.1,
-    help: 'Tip incidence relative to the root. Negative is washout, which unloads the tip and keeps the stall away from the ailerons.',
+    help: 'Tip incidence relative to the root. Negative is washout: it unloads the tip so the stall starts inboard, away from the ailerons - and it costs span efficiency, which is the trade you are making.',
   },
   dihedral: {
     label: 'Dihedral',

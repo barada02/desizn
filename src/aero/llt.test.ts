@@ -187,6 +187,31 @@ describe('what the sliders are supposed to teach', () => {
     expect(bestEfficiency).toBeGreaterThan(0.98)
   })
 
+  it('moves the best taper toward a squarer wing as washout is added', () => {
+    // Washout unloads the tips. A sharply tapered wing already carries little
+    // load out there, so washout pushes it further from elliptical; a squarer
+    // wing carries too much, so washout corrects it. The two controls have to
+    // be set together, which is why the slider help says so.
+    const bestTaperFor = (twist: number) => {
+      let bestTaper = 0
+      let best = 0
+      for (let taper = 0.2; taper <= 1.0001; taper += 0.02) {
+        const result = solveWing(
+          { ...wing({ sweepQuarter: 0, naca: '0012' }), taper, twist },
+          { ...DEFAULT_PARAMS.operating, alpha: 5 },
+        )
+        if (result.spanEfficiency > best) {
+          best = result.spanEfficiency
+          bestTaper = taper
+        }
+      }
+      return bestTaper
+    }
+
+    expect(bestTaperFor(-4)).toBeGreaterThan(bestTaperFor(-2))
+    expect(bestTaperFor(-2)).toBeGreaterThan(bestTaperFor(0))
+  })
+
   it('raises span efficiency when span grows at constant area', () => {
     const alpha = { ...DEFAULT_PARAMS.operating, alpha: 5 }
     const short = solveWing(wing({ span: 8, rootChord: 1.5 }), alpha)
