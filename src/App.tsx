@@ -1,3 +1,6 @@
+import { DEFAULT_PARAMS } from './aero/params'
+import { Studio } from './scene/Studio'
+
 function App() {
   return (
     <div className="shell">
@@ -15,7 +18,9 @@ function App() {
       </header>
 
       <div className="main">
-        <div className="viewport" />
+        <div className="viewport">
+          <Studio wing={DEFAULT_PARAMS.wing} />
+        </div>
         <aside className="sidebar" />
       </div>
     </div>
