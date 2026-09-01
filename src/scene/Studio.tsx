@@ -18,16 +18,10 @@ export function Studio({ wing }: { wing: WingParams }) {
   return (
     <Canvas
       dpr={[1, 2]}
-      shadows
       camera={{ position: [reach * 0.55, reach * 0.42, reach], fov: 38, near: 0.1, far: 500 }}
     >
       <hemisphereLight args={['#93b6c4', '#141a1e', 0.55]} />
-      <directionalLight
-        position={[6, 12, 8]}
-        intensity={2.1}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-      />
+      <directionalLight position={[6, 12, 8]} intensity={2.1} />
       <directionalLight position={[-9, 4, -6]} intensity={0.5} color="#7fd4dc" />
 
       <WingModel wing={wing} />

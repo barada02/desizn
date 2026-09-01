@@ -15,7 +15,7 @@ export function WingModel({ wing }: { wing: WingParams }) {
   useEffect(() => () => geometry.dispose(), [geometry])
 
   return (
-    <mesh geometry={geometry} castShadow receiveShadow>
+    <mesh geometry={geometry}>
       <meshStandardMaterial
         color="#b9c6ce"
         metalness={0.35}
