@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-import { evaluate, type AeroResults } from '../aero/evaluate'
+import { evaluateWith, type AeroResults } from '../aero/evaluate'
+import { factorWing } from '../aero/llt'
+import { dragPolarWith, type DragPolar } from '../aero/polar'
 import {
   DEFAULT_PARAMS,
   OPERATING_BOUNDS,
@@ -23,9 +25,23 @@ import {
 export interface DesignState {
   params: AircraftParams
   results: AeroResults
+  polar: DragPolar
   setWing: (patch: Partial<WingParams>) => void
   setOperating: (patch: Partial<OperatingParams>) => void
   reset: () => void
+}
+
+/**
+ * One factorisation feeds both the point results and the whole polar sweep -
+ * the expensive part of the solve depends only on the wing's shape, so doing it
+ * twice would be pure waste.
+ */
+function analyse(params: AircraftParams): { results: AeroResults; polar: DragPolar } {
+  const solution = factorWing(params.wing)
+  return {
+    results: evaluateWith(solution, params),
+    polar: dragPolarWith(solution, params),
+  }
 }
 
 /** Hold an incoming patch inside the declared bounds before it reaches state. */
@@ -62,21 +78,21 @@ function sanitiseOperating(
 
 export const useDesign = create<DesignState>((set, get) => ({
   params: DEFAULT_PARAMS,
-  results: evaluate(DEFAULT_PARAMS),
+  ...analyse(DEFAULT_PARAMS),
 
   setWing: (patch) => {
     const { params } = get()
     const wing = sanitiseWing(patch, params.wing)
     const next: AircraftParams = { ...params, wing }
-    set({ params: next, results: evaluate(next) })
+    set({ params: next, ...analyse(next) })
   },
 
   setOperating: (patch) => {
     const { params } = get()
     const operating = sanitiseOperating(patch, params.operating)
     const next: AircraftParams = { ...params, operating }
-    set({ params: next, results: evaluate(next) })
+    set({ params: next, ...analyse(next) })
   },
 
-  reset: () => set({ params: DEFAULT_PARAMS, results: evaluate(DEFAULT_PARAMS) }),
+  reset: () => set({ params: DEFAULT_PARAMS, ...analyse(DEFAULT_PARAMS) }),
 }))

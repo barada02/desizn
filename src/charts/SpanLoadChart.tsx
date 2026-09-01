@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react'
 import type { SpanStation } from '../aero/llt'
 import { useDesign } from '../state/designStore'
+import {
+  PLOT_B,
+  PLOT_H,
+  PLOT_L,
+  PLOT_R,
+  PLOT_T,
+  PLOT_W,
+  VB_H,
+  VB_W,
+} from './scale'
 import './chart.css'
 
 /**
@@ -11,20 +21,6 @@ import './chart.css'
  * least induced drag for the same span. How close they sit is the number 'e'
  * beneath them, and watching the gap close as taper changes is the point.
  */
-
-const VB_W = 460
-const VB_H = 196
-const PAD_L = 34
-const PAD_R = 12
-const PAD_T = 12
-const PAD_B = 30
-
-const PLOT_L = PAD_L
-const PLOT_R = VB_W - PAD_R
-const PLOT_T = PAD_T
-const PLOT_B = VB_H - PAD_B
-const PLOT_W = PLOT_R - PLOT_L
-const PLOT_H = PLOT_B - PLOT_T
 
 interface PlotPoint {
   eta: number

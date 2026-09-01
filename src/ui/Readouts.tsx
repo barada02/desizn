@@ -31,6 +31,7 @@ function EfficiencyMeter({ value }: { value: number }) {
 
 export function Readouts() {
   const results = useDesign((s) => s.results)
+  const polar = useDesign((s) => s.polar)
   const alpha = useDesign((s) => s.params.operating.alpha)
 
   const { geometry, drag, air } = results
@@ -47,7 +48,10 @@ export function Readouts() {
         <div className="tile">
           <span className="label">Lift / drag</span>
           <span className="figure mono">{results.liftToDrag.toFixed(1)}</span>
-          <span className="sub">at {alpha.toFixed(1)}&deg;</span>
+          <span className="sub">
+            best {polar.bestLiftToDrag.liftToDrag.toFixed(1)} at{' '}
+            {polar.bestLiftToDrag.alpha.toFixed(1)}&deg;
+          </span>
         </div>
         <div className="tile">
           <span className="label">Aspect ratio</span>
@@ -79,6 +83,17 @@ export function Readouts() {
           )}
         </span>
       </div>
+
+      {results.beyondLinear && (
+        <div className="verdict is-warn">
+          <span className="dot" aria-hidden="true" />
+          <span>
+            Past linear theory — a section is carrying c<sub>l</sub>{' '}
+            <b className="mono">{results.maxSectionCl.toFixed(2)}</b>, where a real
+            one would be close to stalling. These numbers are optimistic.
+          </span>
+        </div>
+      )}
 
       <dl className="detail">
         <div>

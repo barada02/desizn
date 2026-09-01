@@ -1,3 +1,4 @@
+import { DragPolarChart } from './charts/DragPolarChart'
 import { SpanLoadChart } from './charts/SpanLoadChart'
 import { Studio } from './scene/Studio'
 import { useDesign } from './state/designStore'
@@ -29,6 +30,7 @@ function App() {
           </div>
           <div className="results">
             <SpanLoadChart />
+            <DragPolarChart />
             <Readouts />
           </div>
         </div>
