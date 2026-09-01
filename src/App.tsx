@@ -1,7 +1,10 @@
-import { DEFAULT_PARAMS } from './aero/params'
 import { Studio } from './scene/Studio'
+import { useDesign } from './state/designStore'
+import { ControlPanel } from './ui/ControlPanel'
 
 function App() {
+  const wing = useDesign((s) => s.params.wing)
+
   return (
     <div className="shell">
       <header className="topbar">
@@ -19,9 +22,11 @@ function App() {
 
       <div className="main">
         <div className="viewport">
-          <Studio wing={DEFAULT_PARAMS.wing} />
+          <Studio wing={wing} />
         </div>
-        <aside className="sidebar" />
+        <aside className="sidebar">
+          <ControlPanel />
+        </aside>
       </div>
     </div>
   )

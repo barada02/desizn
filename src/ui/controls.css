@@ -1,0 +1,223 @@
+/* Control panel: sliders, the section picker and the readouts they feed. */
+
+.panel-group {
+  border-bottom: 1px solid var(--line);
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-group > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panel-group .note {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+
+/* --- one slider ------------------------------------------------- */
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.control-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.control-name {
+  font-size: 0.86rem;
+  color: var(--ink);
+}
+
+.control-name .sym {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  margin-left: 6px;
+}
+
+.control-value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.86rem;
+  color: var(--accent);
+}
+
+.control-value .unit {
+  color: var(--ink-3);
+  margin-left: 3px;
+}
+
+.control input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  background: transparent;
+  cursor: grab;
+}
+
+.control input[type='range']:active {
+  cursor: grabbing;
+}
+
+.control input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--panel-3);
+}
+
+.control input[type='range']::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--panel-3);
+}
+
+.control input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+}
+
+.control input[type='range']::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--panel);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* The explanation earns its space only while the control has attention. */
+.control-help {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 160ms ease;
+  color: var(--ink-3);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.control:hover .control-help,
+.control:focus-within .control-help {
+  grid-template-rows: 1fr;
+}
+
+.control-help > span {
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control-help {
+    transition: none;
+  }
+}
+
+/* --- airfoil picker --------------------------------------------- */
+
+.airfoil {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.airfoil-entry {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.airfoil input[type='text'] {
+  width: 88px;
+  padding: 6px 9px;
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+.airfoil input[type='text']:focus {
+  border-color: var(--accent-dim);
+}
+
+.airfoil input[type='text'].invalid {
+  border-color: var(--bad);
+}
+
+.airfoil-status {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+
+.airfoil-status.invalid {
+  color: var(--bad);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.presets button {
+  padding: 4px 9px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+.presets button:hover {
+  color: var(--ink);
+  border-color: var(--accent-dim);
+}
+
+.presets button[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: var(--accent-soft);
+}
+
+/* --- panel actions ---------------------------------------------- */
+
+.panel-actions {
+  padding: 14px 18px 22px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.panel-actions button {
+  padding: 6px 13px;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+.panel-actions button:hover {
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
