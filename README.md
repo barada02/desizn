@@ -1,11 +1,11 @@
 # desizn
 
-A parametric wing studio in the browser. Move a slider, and a real aerodynamic
-solver runs: the 3D shape, the spanwise load, the drag polar and the flight
-envelope all move together.
+A parametric wing studio in the browser. Pick a design brief, shape a wing
+against it, and watch a real aerodynamic solver tell you whether it works.
 
-It is a living spreadsheet with a wing attached — closer to a design playground
-than to CAD.
+Move a slider and everything responds together: the 3D model, the spanwise load,
+the drag polar, the flight envelope, and a running checklist of the requirements
+you are trying to meet.
 
 ## Running it
 
@@ -16,6 +16,28 @@ npm test         # the aero core, ~160 tests
 npm run build    # typecheck + production build
 npm run lint
 ```
+
+## What you do with it
+
+**Pick a brief.** A club trainer, a cross-country glider, a short-field utility
+or a sport racer — each a small set of requirements that genuinely fight each
+other. A trainer wants a low stall speed and a short span, and those pull
+opposite ways: stall wants area, the span cap turns area into chord, and chord
+costs the aspect ratio the glide requirement needs.
+
+**Shape the aircraft.** Span, chord, taper, sweep, twist, dihedral, the NACA
+section, the tailplane, the centre of gravity, and the condition you fly it at.
+
+**See whether it works.** A live checklist says which requirements are met and,
+for the ones that are not, which way the number has to move.
+
+**Find out whether a change helped.** Pin the design, then keep editing —
+everything is measured against the pinned version, and it says how many things
+got better, worse, or simply moved.
+
+**Keep what works.** Save designs by name; they stay in your browser.
+
+Or take the **Free play** brief and just move things to see what happens.
 
 ## What it computes
 
@@ -75,6 +97,7 @@ src/
     solver        the facade both hide behind
     drag  stability  envelope  polar  atmosphere
     evaluate      parameters in, results out — the whole core behind one call
+  design/      briefs, requirement checking, comparison, saved designs
   geometry/    parameters → BufferGeometry
   scene/       React Three Fiber
   charts/      hand-rolled SVG
@@ -108,7 +131,11 @@ Tests assert against results that do not come from this code:
 
 ## Where it is going
 
-Phases 1–4 are done: the wing, the drag polar, the tail and envelope, and the
-vortex lattice. Still ahead: a fuselage, propulsion, and a WebMCP tool surface so
-an agent can drive the same store the sliders do — reading results freely, but
-paying a visible, undoable call to change what you see.
+Phases 1–5 are done: the wing, the drag polar, the tail and envelope, the vortex
+lattice, and the design loop — briefs, comparison and saved designs.
+
+Still ahead: a fuselage and propulsion, which would bring the numbers an aircraft
+designer actually argues about — rate of climb, range, endurance, takeoff
+distance. Then a WebMCP tool surface, so an agent can drive the same store the
+sliders do: reading results freely, but paying a visible, undoable call to
+change what you see.
