@@ -320,3 +320,89 @@ export function isValidNaca(code: string): boolean {
 }
 
 export const DEG = Math.PI / 180
+
+/** Hold an incoming patch inside the declared bounds before it reaches state. */
+export function sanitiseWing(patch: Partial<WingParams>, current: WingParams): WingParams {
+  const next: WingParams = { ...current }
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (key === 'naca') {
+      if (typeof value === 'string' && isValidNaca(value)) next.naca = value
+      continue
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    const bound = WING_BOUNDS[key as NumericWingKey]
+    if (bound) next[key as NumericWingKey] = clampToBound(value, bound)
+  }
+
+  return next
+}
+
+export function sanitiseTail(patch: Partial<TailParams>, current: TailParams): TailParams {
+  const next: TailParams = { ...current }
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (key === 'naca') {
+      if (typeof value === 'string' && isValidNaca(value)) next.naca = value
+      continue
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    const bound = TAIL_BOUNDS[key as NumericTailKey]
+    if (bound) next[key as NumericTailKey] = clampToBound(value, bound)
+  }
+
+  return next
+}
+
+export function sanitiseBalance(
+  patch: Partial<BalanceParams>,
+  current: BalanceParams,
+): BalanceParams {
+  const next: BalanceParams = { ...current }
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    const bound = BALANCE_BOUNDS[key as keyof BalanceParams]
+    if (bound) next[key as keyof BalanceParams] = clampToBound(value, bound)
+  }
+
+  return next
+}
+
+export function sanitiseOperating(
+  patch: Partial<OperatingParams>,
+  current: OperatingParams,
+): OperatingParams {
+  const next: OperatingParams = { ...current }
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    const bound = OPERATING_BOUNDS[key as keyof OperatingParams]
+    if (bound) next[key as keyof OperatingParams] = clampToBound(value, bound)
+  }
+
+  return next
+}
+
+/**
+ * Rebuild a full parameter set from whatever shape arrives - a saved design
+ * from an older version, or anything else that came in from outside the app.
+ * Missing keys fall back to the defaults and every number is clamped to its
+ * declared bound, so a stored file can never push the solver somewhere it has
+ * no honest answer.
+ */
+export function coerceParams(raw: unknown): AircraftParams {
+  const source = (raw ?? {}) as Partial<AircraftParams>
+  const solver =
+    source.solver === 'lifting-line' || source.solver === 'vortex-lattice'
+      ? source.solver
+      : DEFAULT_PARAMS.solver
+
+  return {
+    wing: sanitiseWing(source.wing ?? {}, DEFAULT_PARAMS.wing),
+    tail: sanitiseTail(source.tail ?? {}, DEFAULT_PARAMS.tail),
+    balance: sanitiseBalance(source.balance ?? {}, DEFAULT_PARAMS.balance),
+    operating: sanitiseOperating(source.operating ?? {}, DEFAULT_PARAMS.operating),
+    solver,
+  }
+}

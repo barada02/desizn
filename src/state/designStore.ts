@@ -6,17 +6,13 @@ import { DEFAULT_BRIEF, briefById } from '../design/briefs'
 import { checkBrief, type BriefCheck } from '../design/requirements'
 import { analyse } from '../design/snapshot'
 import {
-  BALANCE_BOUNDS,
   DEFAULT_PARAMS,
-  OPERATING_BOUNDS,
-  TAIL_BOUNDS,
-  WING_BOUNDS,
-  clampToBound,
-  isValidNaca,
+  sanitiseBalance,
+  sanitiseOperating,
+  sanitiseTail,
+  sanitiseWing,
   type AircraftParams,
   type BalanceParams,
-  type NumericTailKey,
-  type NumericWingKey,
   type OperatingParams,
   type TailParams,
   type WingParams,
@@ -51,69 +47,6 @@ export interface DesignState {
 function refresh(params: AircraftParams, briefId: string) {
   const snapshot = analyse(params)
   return { ...snapshot, briefId, brief: checkBrief(briefById(briefId), snapshot) }
-}
-
-/** Hold an incoming patch inside the declared bounds before it reaches state. */
-function sanitiseWing(patch: Partial<WingParams>, current: WingParams): WingParams {
-  const next: WingParams = { ...current }
-
-  for (const [key, value] of Object.entries(patch)) {
-    if (key === 'naca') {
-      if (typeof value === 'string' && isValidNaca(value)) next.naca = value
-      continue
-    }
-    if (typeof value !== 'number' || !Number.isFinite(value)) continue
-    const bound = WING_BOUNDS[key as NumericWingKey]
-    if (bound) next[key as NumericWingKey] = clampToBound(value, bound)
-  }
-
-  return next
-}
-
-function sanitiseTail(patch: Partial<TailParams>, current: TailParams): TailParams {
-  const next: TailParams = { ...current }
-
-  for (const [key, value] of Object.entries(patch)) {
-    if (key === 'naca') {
-      if (typeof value === 'string' && isValidNaca(value)) next.naca = value
-      continue
-    }
-    if (typeof value !== 'number' || !Number.isFinite(value)) continue
-    const bound = TAIL_BOUNDS[key as NumericTailKey]
-    if (bound) next[key as NumericTailKey] = clampToBound(value, bound)
-  }
-
-  return next
-}
-
-function sanitiseBalance(
-  patch: Partial<BalanceParams>,
-  current: BalanceParams,
-): BalanceParams {
-  const next: BalanceParams = { ...current }
-
-  for (const [key, value] of Object.entries(patch)) {
-    if (typeof value !== 'number' || !Number.isFinite(value)) continue
-    const bound = BALANCE_BOUNDS[key as keyof BalanceParams]
-    if (bound) next[key as keyof BalanceParams] = clampToBound(value, bound)
-  }
-
-  return next
-}
-
-function sanitiseOperating(
-  patch: Partial<OperatingParams>,
-  current: OperatingParams,
-): OperatingParams {
-  const next: OperatingParams = { ...current }
-
-  for (const [key, value] of Object.entries(patch)) {
-    if (typeof value !== 'number' || !Number.isFinite(value)) continue
-    const bound = OPERATING_BOUNDS[key as keyof OperatingParams]
-    if (bound) next[key as keyof OperatingParams] = clampToBound(value, bound)
-  }
-
-  return next
 }
 
 export const useDesign = create<DesignState>((set, get) => ({
