@@ -98,6 +98,24 @@ function verdictFor(staticMargin: number): StabilityVerdict {
   return 'very-stable'
 }
 
+/**
+ * The tail's factorisation depends only on the tail's own shape, but stability
+ * is recomputed whenever any parameter moves - including airspeed and incidence,
+ * which cannot change it. Keying a single-entry cache on the parameter object's
+ * identity is enough: the store only builds a new tail object when the tail
+ * actually changes, so dragging any other slider reuses this.
+ */
+let cachedTail: TailParams | null = null
+let cachedTailSolution: ReturnType<typeof factorWing> | null = null
+
+function tailSolution(tail: TailParams) {
+  if (cachedTail !== tail || cachedTailSolution === null) {
+    cachedTail = tail
+    cachedTailSolution = factorWing(tailAsWing(tail))
+  }
+  return cachedTailSolution
+}
+
 export function stability(
   wing: WingParams,
   tail: TailParams,
@@ -110,7 +128,7 @@ export function stability(
   // The tail gets a full lifting-line solve of its own - a low-aspect-ratio
   // tailplane has a noticeably shallower lift curve than the wing, and that
   // ratio goes straight into the neutral point.
-  const tailLiftSlope = atAlpha(factorWing(tailAsWing(tail)), 0).clAlpha
+  const tailLiftSlope = atAlpha(tailSolution(tail), 0).clAlpha
 
   const tailVolume =
     (tailGeometry.area * tail.arm) / (wingGeometry.area * wingGeometry.mac)

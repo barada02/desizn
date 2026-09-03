@@ -3,14 +3,19 @@ import { evaluateWith, type AeroResults } from '../aero/evaluate'
 import { factorWing } from '../aero/llt'
 import { dragPolarWith, type DragPolar } from '../aero/polar'
 import {
+  BALANCE_BOUNDS,
   DEFAULT_PARAMS,
   OPERATING_BOUNDS,
+  TAIL_BOUNDS,
   WING_BOUNDS,
   clampToBound,
   isValidNaca,
   type AircraftParams,
+  type BalanceParams,
+  type NumericTailKey,
   type NumericWingKey,
   type OperatingParams,
+  type TailParams,
   type WingParams,
 } from '../aero/params'
 
@@ -27,6 +32,8 @@ export interface DesignState {
   results: AeroResults
   polar: DragPolar
   setWing: (patch: Partial<WingParams>) => void
+  setTail: (patch: Partial<TailParams>) => void
+  setBalance: (patch: Partial<BalanceParams>) => void
   setOperating: (patch: Partial<OperatingParams>) => void
   reset: () => void
 }
@@ -61,6 +68,37 @@ function sanitiseWing(patch: Partial<WingParams>, current: WingParams): WingPara
   return next
 }
 
+function sanitiseTail(patch: Partial<TailParams>, current: TailParams): TailParams {
+  const next: TailParams = { ...current }
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (key === 'naca') {
+      if (typeof value === 'string' && isValidNaca(value)) next.naca = value
+      continue
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    const bound = TAIL_BOUNDS[key as NumericTailKey]
+    if (bound) next[key as NumericTailKey] = clampToBound(value, bound)
+  }
+
+  return next
+}
+
+function sanitiseBalance(
+  patch: Partial<BalanceParams>,
+  current: BalanceParams,
+): BalanceParams {
+  const next: BalanceParams = { ...current }
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    const bound = BALANCE_BOUNDS[key as keyof BalanceParams]
+    if (bound) next[key as keyof BalanceParams] = clampToBound(value, bound)
+  }
+
+  return next
+}
+
 function sanitiseOperating(
   patch: Partial<OperatingParams>,
   current: OperatingParams,
@@ -84,6 +122,21 @@ export const useDesign = create<DesignState>((set, get) => ({
     const { params } = get()
     const wing = sanitiseWing(patch, params.wing)
     const next: AircraftParams = { ...params, wing }
+    set({ params: next, ...analyse(next) })
+  },
+
+  setTail: (patch) => {
+    const { params } = get()
+    const next: AircraftParams = { ...params, tail: sanitiseTail(patch, params.tail) }
+    set({ params: next, ...analyse(next) })
+  },
+
+  setBalance: (patch) => {
+    const { params } = get()
+    const next: AircraftParams = {
+      ...params,
+      balance: sanitiseBalance(patch, params.balance),
+    }
     set({ params: next, ...analyse(next) })
   },
 

@@ -10,6 +10,8 @@
 import { atmosphere, dynamicPressure, reynolds, type Atmosphere } from './atmosphere'
 import { sectionProperties } from './airfoil'
 import { dragBuildup, type DragBuildup } from './drag'
+import { flightEnvelope, type FlightEnvelope } from './envelope'
+import { stability as computeStability, type Stability } from './stability'
 import {
   atAlpha,
   factorWing,
@@ -61,6 +63,11 @@ export interface AeroResults {
   beyondLinear: boolean
   /** The section stall estimate that judgement was made against */
   sectionClMax: number
+
+  /** Longitudinal stability: neutral point, static margin and the tail behind them */
+  stability: Stability
+  /** Stall, limit loads and the V-n envelope */
+  envelope: FlightEnvelope
 
   stations: SpanStation[]
 }
@@ -127,6 +134,8 @@ export function evaluateWith(
     maxSectionCl,
     beyondLinear: maxSectionCl > sectionClMax,
     sectionClMax,
+    stability: computeStability(wing, params.tail, params.balance, lifting.clAlpha),
+    envelope: flightEnvelope(solution, params, sectionClMax),
     stations: lifting.stations,
   }
 }
