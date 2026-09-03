@@ -12,6 +12,20 @@ describe('designStore', () => {
     expect(store().results.cl).toBeGreaterThan(0)
   })
 
+  it('produces a polar alongside the point results', () => {
+    expect(store().polar.points.length).toBeGreaterThan(20)
+    expect(store().polar.current.alpha).toBe(DEFAULT_PARAMS.operating.alpha)
+    expect(store().polar.current.cl).toBeCloseTo(store().results.cl, 12)
+  })
+
+  it('keeps the polar in step with the parameters', () => {
+    const before = store().polar.bestLiftToDrag.liftToDrag
+    store().setWing({ span: 22, rootChord: 0.6 })
+
+    expect(store().polar.bestLiftToDrag.liftToDrag).toBeGreaterThan(before)
+    expect(store().polar.current.cd).toBeCloseTo(store().results.cd, 12)
+  })
+
   it('recomputes results on every change', () => {
     const before = store().results.geometry.aspectRatio
     store().setWing({ span: 20 })
@@ -60,6 +74,32 @@ describe('designStore', () => {
 
     expect(store().params.operating.alpha).toBe(16)
     expect(store().params.operating.altitude).toBe(0)
+  })
+
+  it('switches solver and recomputes everything through it', () => {
+    store().setSolver('lifting-line')
+    const llt = store().results
+
+    store().setSolver('vortex-lattice')
+    const vlm = store().results
+
+    expect(store().params.solver).toBe('vortex-lattice')
+    // A lifting-surface method reads under lifting-line theory at this span.
+    expect(vlm.cl).toBeLessThan(llt.cl)
+    expect(vlm.cl).toBeGreaterThan(llt.cl * 0.85)
+  })
+
+  it('lets the lattice see sweep where lifting line cannot', () => {
+    store().setSolver('lifting-line')
+    store().setWing({ sweepQuarter: 0 })
+    const lltStraight = store().results.cl
+    store().setWing({ sweepQuarter: 40 })
+    expect(store().results.cl).toBeCloseTo(lltStraight, 10)
+
+    store().setSolver('vortex-lattice')
+    const vlmSwept = store().results.cl
+    store().setWing({ sweepQuarter: 0 })
+    expect(store().results.cl).toBeGreaterThan(vlmSwept)
   })
 
   it('returns to the defaults on reset', () => {

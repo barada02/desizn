@@ -221,3 +221,25 @@
   color: var(--ink);
   border-color: var(--ink-3);
 }
+
+/* --- solver picker ------------------------------------------------ */
+
+.solver {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.solver-blurb {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.solver-warning {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--warn);
+  border-left: 2px solid var(--warn);
+  padding-left: 9px;
+}

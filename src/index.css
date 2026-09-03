@@ -167,8 +167,7 @@ button {
 }
 
 .results .chart {
-  flex: 1 1 340px;
-  max-width: 520px;
+  min-width: 0;
 }
 
 .sidebar {

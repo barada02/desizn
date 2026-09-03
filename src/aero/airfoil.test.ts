@@ -5,6 +5,7 @@ import {
   camberSlope,
   halfThicknessAt,
   parseNaca,
+  sectionClMax,
   zeroLiftAlpha,
 } from './airfoil'
 
@@ -120,6 +121,39 @@ describe('zeroLiftAlpha', () => {
     const fine = zeroLiftAlpha(parseNaca('2412'), 4000)
 
     expect(coarse).toBeCloseTo(fine, 6)
+  })
+})
+
+describe('sectionClMax', () => {
+  it('lands close to the published peaks for the common sections', () => {
+    // Measured values near Re 3e6 are roughly 1.45, 1.60 and 1.75.
+    expect(sectionClMax(parseNaca('0012'))).toBeCloseTo(1.45, 1)
+    expect(sectionClMax(parseNaca('2412'))).toBeCloseTo(1.6, 1)
+    expect(sectionClMax(parseNaca('4412'))).toBeCloseTo(1.75, 1)
+  })
+
+  it('rises with camber', () => {
+    expect(sectionClMax(parseNaca('4412'))).toBeGreaterThan(
+      sectionClMax(parseNaca('2412')),
+    )
+    expect(sectionClMax(parseNaca('2412'))).toBeGreaterThan(
+      sectionClMax(parseNaca('0012')),
+    )
+  })
+
+  it('penalises sections far from about 13% thick', () => {
+    const mid = sectionClMax(parseNaca('0013'))
+
+    expect(sectionClMax(parseNaca('0006'))).toBeLessThan(mid)
+    expect(sectionClMax(parseNaca('0024'))).toBeLessThan(mid)
+  })
+
+  it('never returns something a wing could not reach', () => {
+    for (const code of ['0006', '0012', '2412', '4415', '6321', '9945']) {
+      const value = sectionClMax(parseNaca(code))
+      expect(value).toBeGreaterThan(0.9)
+      expect(value).toBeLessThan(2.6)
+    }
   })
 })
 

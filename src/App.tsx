@@ -1,4 +1,4 @@
-import { SpanLoadChart } from './charts/SpanLoadChart'
+import { ChartPanel } from './charts/ChartPanel'
 import { Studio } from './scene/Studio'
 import { useDesign } from './state/designStore'
 import { ControlPanel } from './ui/ControlPanel'
@@ -6,6 +6,9 @@ import { Readouts } from './ui/Readouts'
 
 function App() {
   const wing = useDesign((s) => s.params.wing)
+  const tail = useDesign((s) => s.params.tail)
+  const balance = useDesign((s) => s.params.balance)
+  const neutralPoint = useDesign((s) => s.results.stability.neutralPoint)
 
   return (
     <div className="shell">
@@ -25,10 +28,15 @@ function App() {
       <div className="main">
         <div className="stage">
           <div className="viewport">
-            <Studio wing={wing} />
+            <Studio
+              wing={wing}
+              tail={tail}
+              balance={balance}
+              neutralPoint={neutralPoint}
+            />
           </div>
           <div className="results">
-            <SpanLoadChart />
+            <ChartPanel />
             <Readouts />
           </div>
         </div>

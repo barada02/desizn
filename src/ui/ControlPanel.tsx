@@ -1,10 +1,13 @@
 import { useId, useState } from 'react'
 import {
+  BALANCE_BOUNDS,
   OPERATING_BOUNDS,
+  TAIL_BOUNDS,
   WING_BOUNDS,
   isValidNaca,
   type ParamBound,
 } from '../aero/params'
+import { SOLVERS, type SolverKind } from '../aero/solver'
 import { useDesign } from '../state/designStore'
 import './controls.css'
 
@@ -12,7 +15,8 @@ import './controls.css'
 function decimalsFor(step: number): number {
   if (step >= 1) return 0
   if (step >= 0.1) return 1
-  return 2
+  if (step >= 0.01) return 2
+  return 3
 }
 
 interface SliderProps {
@@ -106,10 +110,43 @@ function AirfoilPicker() {
   )
 }
 
+function SolverPicker() {
+  const solver = useDesign((s) => s.params.solver)
+  const setSolver = useDesign((s) => s.setSolver)
+
+  return (
+    <div className="solver">
+      <div className="presets">
+        {(Object.keys(SOLVERS) as SolverKind[]).map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            aria-pressed={solver === kind}
+            onClick={() => setSolver(kind)}
+          >
+            {SOLVERS[kind].label}
+          </button>
+        ))}
+      </div>
+      <p className="solver-blurb">{SOLVERS[solver].blurb}</p>
+      {!SOLVERS[solver].seesSweep && (
+        <p className="solver-warning">
+          Sweep and dihedral change the shape but not the numbers under this
+          model. Switch to the vortex lattice to see them count.
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function ControlPanel() {
   const wing = useDesign((s) => s.params.wing)
+  const tail = useDesign((s) => s.params.tail)
+  const balance = useDesign((s) => s.params.balance)
   const operating = useDesign((s) => s.params.operating)
   const setWing = useDesign((s) => s.setWing)
+  const setTail = useDesign((s) => s.setTail)
+  const setBalance = useDesign((s) => s.setBalance)
   const setOperating = useDesign((s) => s.setOperating)
   const reset = useDesign((s) => s.reset)
 
@@ -140,6 +177,36 @@ export function ControlPanel() {
 
       <section className="panel-group">
         <header>
+          <span className="label">Tail</span>
+          <span className="note">sets stability</span>
+        </header>
+        {(Object.keys(TAIL_BOUNDS) as (keyof typeof TAIL_BOUNDS)[]).map((key) => (
+          <Slider
+            key={key}
+            bound={TAIL_BOUNDS[key]}
+            value={tail[key]}
+            onChange={(value) => setTail({ [key]: value })}
+          />
+        ))}
+      </section>
+
+      <section className="panel-group">
+        <header>
+          <span className="label">Balance</span>
+          <span className="note">where the mass sits</span>
+        </header>
+        {(Object.keys(BALANCE_BOUNDS) as (keyof typeof BALANCE_BOUNDS)[]).map((key) => (
+          <Slider
+            key={key}
+            bound={BALANCE_BOUNDS[key]}
+            value={balance[key]}
+            onChange={(value) => setBalance({ [key]: value })}
+          />
+        ))}
+      </section>
+
+      <section className="panel-group">
+        <header>
           <span className="label">Flight condition</span>
           <span className="note">changes the numbers</span>
         </header>
@@ -153,6 +220,14 @@ export function ControlPanel() {
             />
           ),
         )}
+      </section>
+
+      <section className="panel-group">
+        <header>
+          <span className="label">Aerodynamic model</span>
+          <span className="note">which theory answers</span>
+        </header>
+        <SolverPicker />
       </section>
 
       <div className="panel-actions">
