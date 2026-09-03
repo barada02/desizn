@@ -5,6 +5,8 @@ import { formFactor, skinFrictionCoefficient } from './drag'
 import { DEFAULT_PARAMS, type AircraftParams } from './params'
 
 const design = (over: Partial<AircraftParams> = {}): AircraftParams => ({
+  ...DEFAULT_PARAMS,
+  ...over,
   wing: { ...DEFAULT_PARAMS.wing, ...over.wing },
   operating: { ...DEFAULT_PARAMS.operating, ...over.operating },
 })
