@@ -108,31 +108,28 @@ describe('dragPolar', () => {
     expect(shared.bestLiftToDrag).toEqual(fresh.bestLiftToDrag)
   })
 
-  it('sweeps far more cheaply than solving each angle from scratch', () => {
-    // A relative budget rather than an absolute one, so it means the same thing
-    // on a fast laptop and a loaded CI box. If someone reverts the shared
-    // factorisation or the cached sine table, this ratio collapses and the
-    // whole polar stops fitting comfortably inside a frame.
+  it('sweeps far more cheaply than factoring once per angle would', () => {
+    // A ratio rather than a millisecond budget, so it means the same thing on a
+    // loaded CI box as on a fast laptop. Distinct wing objects defeat the
+    // solver's identity cache, so this really does measure factorisation.
     const params = design()
+    const points = dragPolar(params).points.length
+    const shapes = Array.from({ length: points }, () => ({ ...params.wing }))
+
     const solution = factorSurface(params.wing, params.solver)
-    const runs = 40
-
+    for (let i = 0; i < 20; i++) dragPolarWith(solution, params)
+    const sweepStart = performance.now()
     for (let i = 0; i < 10; i++) dragPolarWith(solution, params)
-    const sharedStart = performance.now()
-    for (let i = 0; i < runs; i++) dragPolarWith(solution, params)
-    const shared = performance.now() - sharedStart
+    const sweep = (performance.now() - sweepStart) / 10
 
-    for (let i = 0; i < 5; i++) dragPolar(params)
-    const freshStart = performance.now()
-    for (let i = 0; i < runs; i++) dragPolar(params)
-    const fresh = performance.now() - freshStart
+    for (const shape of shapes.slice(0, 10)) factorSurface(shape, params.solver)
+    const factorStart = performance.now()
+    for (const shape of shapes) factorSurface(shape, params.solver)
+    const perAngle = performance.now() - factorStart
 
-    // Re-factoring per sweep must cost meaningfully more than reusing one.
-    // Expressed as a ratio rather than a millisecond budget: an absolute figure
-    // measures how loaded the machine is - this measures the thing we care
-    // about. If the cached sine table were removed the sweep would dominate
-    // both timings and this ratio would collapse toward 1.
-    expect(fresh / shared).toBeGreaterThan(1.3)
+    // Reusing one factorisation across the whole sweep has to be dramatically
+    // cheaper than factoring at every point, which is the design being tested.
+    expect(perAngle).toBeGreaterThan(sweep * 5)
   })
 
   it('rewards a longer wing with a better peak lift-to-drag', () => {

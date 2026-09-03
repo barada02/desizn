@@ -53,10 +53,7 @@ export interface SurfaceSolution {
   at: (alpha: number) => LiftingLineResult
 }
 
-export function factorSurface(
-  wing: WingParams,
-  kind: SolverKind = DEFAULT_SOLVER,
-): SurfaceSolution {
+function build(wing: WingParams, kind: SolverKind): SurfaceSolution {
   if (kind === 'vortex-lattice') {
     const solution = factorWingVlm(wing)
     return { kind, at: (alpha) => vlmAtAlpha(solution, alpha) }
@@ -64,4 +61,30 @@ export function factorSurface(
 
   const solution = factorWing(wing)
   return { kind, at: (alpha) => atAlpha(solution, alpha) }
+}
+
+/**
+ * Factoring depends only on the wing's shape, but the studio recomputes
+ * everything whenever any parameter moves - including airspeed, altitude, mass
+ * and incidence, none of which can change it. Those are also the sliders most
+ * likely to be dragged.
+ *
+ * A single-entry cache keyed on the parameter object's identity is enough,
+ * because the store only builds a new wing object when the wing actually
+ * changes. Flight-condition drags then cost nothing but the evaluation.
+ */
+let cachedWing: WingParams | null = null
+let cachedKind: SolverKind | null = null
+let cachedSolution: SurfaceSolution | null = null
+
+export function factorSurface(
+  wing: WingParams,
+  kind: SolverKind = DEFAULT_SOLVER,
+): SurfaceSolution {
+  if (cachedWing !== wing || cachedKind !== kind || cachedSolution === null) {
+    cachedWing = wing
+    cachedKind = kind
+    cachedSolution = build(wing, kind)
+  }
+  return cachedSolution
 }
