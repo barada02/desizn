@@ -123,3 +123,66 @@
   margin: 0;
   color: var(--ink-2);
 }
+
+/* --- static margin indicator -------------------------------------- */
+
+.tile .figure .unit {
+  font-size: 0.68em;
+  color: var(--ink-3);
+  margin-left: 1px;
+}
+
+.margin-meter {
+  position: relative;
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 2px;
+  background: var(--panel-3);
+}
+
+.margin-meter .band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--good);
+  opacity: 0.28;
+  border-radius: 2px;
+}
+
+/* The neutral point: the CG marker crossing this is the moment it goes unstable. */
+.margin-meter .np {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--good);
+}
+
+.margin-meter .cg {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid var(--panel);
+}
+
+.margin-meter.is-unstable .cg {
+  background: var(--bad);
+}
+
+.margin-meter.is-marginal .cg,
+.margin-meter.is-very-stable .cg {
+  background: var(--warn);
+}
+
+.verdict.is-bad {
+  border-left-color: var(--bad);
+}
+
+.verdict.is-bad .dot {
+  background: var(--bad);
+}
