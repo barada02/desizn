@@ -13,7 +13,7 @@
  */
 
 import { atmosphere } from './atmosphere'
-import { atAlpha, type LiftingLineSolution } from './llt'
+import type { SurfaceSolution } from './solver'
 import type { AircraftParams } from './params'
 import { planform } from './planform'
 
@@ -90,11 +90,11 @@ export interface FlightEnvelope extends WingStall {
  * line and each line can be solved for its own stall angle in closed form.
  */
 export function wingStall(
-  solution: LiftingLineSolution,
+  solution: SurfaceSolution,
   sectionClMax: number,
 ): WingStall {
-  const low = atAlpha(solution, 0)
-  const high = atAlpha(solution, 10)
+  const low = solution.at(0)
+  const high = solution.at(10)
 
   let alphaStall = Infinity
   let criticalEta = 0
@@ -116,7 +116,7 @@ export function wingStall(
   }
 
   return {
-    clMax: atAlpha(solution, alphaStall).cl,
+    clMax: solution.at(alphaStall).cl,
     alphaStall,
     criticalEta,
     stallsAtTip: Math.abs(criticalEta) > 0.7,
@@ -124,7 +124,7 @@ export function wingStall(
 }
 
 export function flightEnvelope(
-  solution: LiftingLineSolution,
+  solution: SurfaceSolution,
   params: AircraftParams,
   sectionClMax: number,
 ): FlightEnvelope {
@@ -174,7 +174,7 @@ export function flightEnvelope(
   negativeBoundary.push({ v: diveSpeed * NEGATIVE_PLATEAU_END, n: LIMIT_LOAD_NEGATIVE })
   negativeBoundary.push({ v: diveSpeed, n: 0 })
 
-  const current = atAlpha(solution, operating.alpha)
+  const current = solution.at(operating.alpha)
   const q = 0.5 * air.density * operating.speed * operating.speed
   const currentLoadFactor = weight > 0 ? (q * geometry.area * current.cl) / weight : 0
 

@@ -12,12 +12,8 @@ import { sectionProperties } from './airfoil'
 import { dragBuildup, type DragBuildup } from './drag'
 import { flightEnvelope, type FlightEnvelope } from './envelope'
 import { stability as computeStability, type Stability } from './stability'
-import {
-  atAlpha,
-  factorWing,
-  type LiftingLineSolution,
-  type SpanStation,
-} from './llt'
+import type { SpanStation } from './llt'
+import { factorSurface, type SurfaceSolution } from './solver'
 import { DEG, type AircraftParams } from './params'
 import { planform, thicknessRatio, wingLoading, type Planform } from './planform'
 
@@ -77,7 +73,7 @@ export interface AeroResults {
  * factorisation feeds both the results and the whole drag polar.
  */
 export function evaluateWith(
-  solution: LiftingLineSolution,
+  solution: SurfaceSolution,
   params: AircraftParams,
 ): AeroResults {
   const { wing, operating } = params
@@ -86,7 +82,7 @@ export function evaluateWith(
   const air = atmosphere(operating.altitude)
   const q = dynamicPressure(air.density, operating.speed)
 
-  const lifting = atAlpha(solution, operating.alpha)
+  const lifting = solution.at(operating.alpha)
 
   const drag = dragBuildup({
     reynolds: reynolds(air, operating.speed, geometry.mac),
@@ -134,12 +130,18 @@ export function evaluateWith(
     maxSectionCl,
     beyondLinear: maxSectionCl > sectionClMax,
     sectionClMax,
-    stability: computeStability(wing, params.tail, params.balance, lifting.clAlpha),
+    stability: computeStability(
+      wing,
+      params.tail,
+      params.balance,
+      lifting.clAlpha,
+      params.solver,
+    ),
     envelope: flightEnvelope(solution, params, sectionClMax),
     stations: lifting.stations,
   }
 }
 
 export function evaluate(params: AircraftParams): AeroResults {
-  return evaluateWith(factorWing(params.wing), params)
+  return evaluateWith(factorSurface(params.wing, params.solver), params)
 }

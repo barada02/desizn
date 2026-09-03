@@ -15,7 +15,7 @@
  */
 
 import { sectionProperties } from './airfoil'
-import { atAlpha, factorWing, type LiftingLineSolution } from './llt'
+import { factorSurface, type SurfaceSolution } from './solver'
 import { atmosphere, reynolds } from './atmosphere'
 import { dragBuildup } from './drag'
 import { OPERATING_BOUNDS, type AircraftParams } from './params'
@@ -58,7 +58,7 @@ export interface PolarOptions {
 
 /** Sweep a wing that has already been factored. */
 export function dragPolarWith(
-  solution: LiftingLineSolution,
+  solution: SurfaceSolution,
   params: AircraftParams,
   options: PolarOptions = {},
 ): DragPolar {
@@ -80,7 +80,7 @@ export function dragPolarWith(
   }).cd0
 
   const pointAt = (alpha: number): PolarPoint => {
-    const lift = atAlpha(solution, alpha)
+    const lift = solution.at(alpha)
     const cd = cd0 + lift.cdi
 
     let maxSectionCl = 0
@@ -131,5 +131,5 @@ export function dragPolar(
   params: AircraftParams,
   options?: PolarOptions,
 ): DragPolar {
-  return dragPolarWith(factorWing(params.wing), params, options)
+  return dragPolarWith(factorSurface(params.wing, params.solver), params, options)
 }

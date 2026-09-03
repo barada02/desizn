@@ -7,6 +7,7 @@ import {
   isValidNaca,
   type ParamBound,
 } from '../aero/params'
+import { SOLVERS, type SolverKind } from '../aero/solver'
 import { useDesign } from '../state/designStore'
 import './controls.css'
 
@@ -109,6 +110,35 @@ function AirfoilPicker() {
   )
 }
 
+function SolverPicker() {
+  const solver = useDesign((s) => s.params.solver)
+  const setSolver = useDesign((s) => s.setSolver)
+
+  return (
+    <div className="solver">
+      <div className="presets">
+        {(Object.keys(SOLVERS) as SolverKind[]).map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            aria-pressed={solver === kind}
+            onClick={() => setSolver(kind)}
+          >
+            {SOLVERS[kind].label}
+          </button>
+        ))}
+      </div>
+      <p className="solver-blurb">{SOLVERS[solver].blurb}</p>
+      {!SOLVERS[solver].seesSweep && (
+        <p className="solver-warning">
+          Sweep and dihedral change the shape but not the numbers under this
+          model. Switch to the vortex lattice to see them count.
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function ControlPanel() {
   const wing = useDesign((s) => s.params.wing)
   const tail = useDesign((s) => s.params.tail)
@@ -190,6 +220,14 @@ export function ControlPanel() {
             />
           ),
         )}
+      </section>
+
+      <section className="panel-group">
+        <header>
+          <span className="label">Aerodynamic model</span>
+          <span className="note">which theory answers</span>
+        </header>
+        <SolverPicker />
       </section>
 
       <div className="panel-actions">

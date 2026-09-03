@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { evaluate } from './evaluate'
-import { factorWing } from './llt'
+import { factorSurface } from './solver'
 import { DEFAULT_PARAMS, type AircraftParams } from './params'
 import { dragPolar, dragPolarWith } from './polar'
 
@@ -101,7 +101,7 @@ describe('dragPolar', () => {
 
   it('gives the same answer whether or not the factorisation is shared', () => {
     const params = design()
-    const shared = dragPolarWith(factorWing(params.wing), params)
+    const shared = dragPolarWith(factorSurface(params.wing, params.solver), params)
     const fresh = dragPolar(params)
 
     expect(shared.points.map((p) => p.cd)).toEqual(fresh.points.map((p) => p.cd))
@@ -114,7 +114,7 @@ describe('dragPolar', () => {
     // factorisation or the cached sine table, this ratio collapses and the
     // whole polar stops fitting comfortably inside a frame.
     const params = design()
-    const solution = factorWing(params.wing)
+    const solution = factorSurface(params.wing, params.solver)
     const runs = 40
 
     for (let i = 0; i < 10; i++) dragPolarWith(solution, params)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { atAlpha, factorWing } from './llt'
+import { factorSurface } from './solver'
 import { DEFAULT_PARAMS, type TailParams, type WingParams } from './params'
 import { planform } from './planform'
 import {
@@ -21,10 +21,10 @@ const tail = (over: Partial<TailParams> = {}): TailParams => ({
 })
 
 /** The wing's own lift-curve slope, as the caller would supply it. */
-const slopeOf = (w: WingParams) => atAlpha(factorWing(w), 0).clAlpha
+const slopeOf = (w: WingParams) => factorSurface(w, DEFAULT_PARAMS.solver).at(0).clAlpha
 
 const analyse = (w: WingParams, t: TailParams, cg: number) =>
-  stability(w, t, { cg }, slopeOf(w))
+  stability(w, t, { cg }, slopeOf(w), DEFAULT_PARAMS.solver)
 
 describe('downwashGradient', () => {
   it('lands in the range a real tail sees', () => {
@@ -158,6 +158,7 @@ describe('the shipped design', () => {
       DEFAULT_PARAMS.tail,
       DEFAULT_PARAMS.balance,
       slopeOf(DEFAULT_PARAMS.wing),
+      DEFAULT_PARAMS.solver,
     )
 
     expect(result.verdict).toBe('stable')
@@ -173,6 +174,7 @@ describe('the shipped design', () => {
       DEFAULT_PARAMS.tail,
       DEFAULT_PARAMS.balance,
       slopeOf(DEFAULT_PARAMS.wing),
+      DEFAULT_PARAMS.solver,
     )
 
     expect(result.staticMargin - result.fuselageAllowance).toBeGreaterThan(0)

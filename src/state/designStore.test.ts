@@ -76,6 +76,32 @@ describe('designStore', () => {
     expect(store().params.operating.altitude).toBe(0)
   })
 
+  it('switches solver and recomputes everything through it', () => {
+    store().setSolver('lifting-line')
+    const llt = store().results
+
+    store().setSolver('vortex-lattice')
+    const vlm = store().results
+
+    expect(store().params.solver).toBe('vortex-lattice')
+    // A lifting-surface method reads under lifting-line theory at this span.
+    expect(vlm.cl).toBeLessThan(llt.cl)
+    expect(vlm.cl).toBeGreaterThan(llt.cl * 0.85)
+  })
+
+  it('lets the lattice see sweep where lifting line cannot', () => {
+    store().setSolver('lifting-line')
+    store().setWing({ sweepQuarter: 0 })
+    const lltStraight = store().results.cl
+    store().setWing({ sweepQuarter: 40 })
+    expect(store().results.cl).toBeCloseTo(lltStraight, 10)
+
+    store().setSolver('vortex-lattice')
+    const vlmSwept = store().results.cl
+    store().setWing({ sweepQuarter: 0 })
+    expect(store().results.cl).toBeGreaterThan(vlmSwept)
+  })
+
   it('returns to the defaults on reset', () => {
     store().setWing({ span: 25, taper: 0.9 })
     store().setOperating({ speed: 110 })

@@ -19,8 +19,8 @@
  * rather than silent.
  */
 
-import { atAlpha, factorWing } from './llt'
 import { planform } from './planform'
+import { factorSurface, type SolverKind, type SurfaceSolution } from './solver'
 import type { BalanceParams, TailParams, WingParams } from './params'
 
 /** Aerodynamic centre of a subsonic wing, as a fraction of MAC. */
@@ -106,12 +106,14 @@ function verdictFor(staticMargin: number): StabilityVerdict {
  * actually changes, so dragging any other slider reuses this.
  */
 let cachedTail: TailParams | null = null
-let cachedTailSolution: ReturnType<typeof factorWing> | null = null
+let cachedKind: SolverKind | null = null
+let cachedTailSolution: SurfaceSolution | null = null
 
-function tailSolution(tail: TailParams) {
-  if (cachedTail !== tail || cachedTailSolution === null) {
+function tailSolution(tail: TailParams, kind: SolverKind): SurfaceSolution {
+  if (cachedTail !== tail || cachedKind !== kind || cachedTailSolution === null) {
     cachedTail = tail
-    cachedTailSolution = factorWing(tailAsWing(tail))
+    cachedKind = kind
+    cachedTailSolution = factorSurface(tailAsWing(tail), kind)
   }
   return cachedTailSolution
 }
@@ -121,6 +123,7 @@ export function stability(
   tail: TailParams,
   balance: BalanceParams,
   wingLiftSlope: number,
+  kind: SolverKind,
 ): Stability {
   const wingGeometry = planform(wing)
   const tailGeometry = planform(tailAsWing(tail))
@@ -128,7 +131,10 @@ export function stability(
   // The tail gets a full lifting-line solve of its own - a low-aspect-ratio
   // tailplane has a noticeably shallower lift curve than the wing, and that
   // ratio goes straight into the neutral point.
-  const tailLiftSlope = atAlpha(tailSolution(tail), 0).clAlpha
+  // A tailplane is a low-aspect-ratio surface, which is exactly where the two
+  // theories disagree most - so it is solved with whichever one is selected
+  // rather than always with the classical one.
+  const tailLiftSlope = tailSolution(tail, kind).at(0).clAlpha
 
   const tailVolume =
     (tailGeometry.area * tail.arm) / (wingGeometry.area * wingGeometry.mac)

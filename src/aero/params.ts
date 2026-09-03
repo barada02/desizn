@@ -11,6 +11,8 @@
  * and reads. Every solver converts to radians at its own boundary.
  */
 
+import { DEFAULT_SOLVER, type SolverKind } from './solver'
+
 /** Wing shape. Everything here changes the geometry you see. */
 export interface WingParams {
   /** b - full wingspan, tip to tip (m) */
@@ -77,6 +79,8 @@ export interface AircraftParams {
   tail: TailParams
   balance: BalanceParams
   operating: OperatingParams
+  /** Which aerodynamic theory produces the numbers */
+  solver: SolverKind
 }
 
 /** Everything a slider - or an agent - needs to know about one number. */
@@ -276,12 +280,15 @@ export const DEFAULT_PARAMS: AircraftParams = {
   balance: {
     cg: 0.45,
   },
-  // Chosen so the starting design actually flies: at 55 m/s this wing trims
-  // within a tenth of a degree of its default incidence, so the app opens on a
-  // working aeroplane rather than on a warning.
+  solver: DEFAULT_SOLVER,
+  // Chosen so the starting design actually flies: at 56 m/s this wing trims
+  // within a twentieth of a degree of its default incidence, so the app opens
+  // on a working aeroplane rather than on a warning. Retuned when the vortex
+  // lattice became the default solver, since it reads a few percent under
+  // lifting-line theory and the old 55 m/s no longer quite held level flight.
   operating: {
     alpha: 4,
-    speed: 55,
+    speed: 56,
     altitude: 0,
     mass: 900,
   },

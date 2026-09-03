@@ -6,7 +6,7 @@ import {
   flightEnvelope,
   wingStall,
 } from './envelope'
-import { atAlpha, factorWing } from './llt'
+import { factorSurface } from './solver'
 import { DEFAULT_PARAMS, type AircraftParams, type WingParams } from './params'
 import { planform } from './planform'
 
@@ -19,13 +19,13 @@ const design = (over: Partial<AircraftParams> = {}): AircraftParams => ({
 
 const envelopeOf = (params: AircraftParams) =>
   flightEnvelope(
-    factorWing(params.wing),
+    factorSurface(params.wing, params.solver),
     params,
     sectionProperties(params.wing.naca).clMax,
   )
 
 const stallOf = (w: WingParams) =>
-  wingStall(factorWing(w), sectionProperties(w.naca).clMax)
+  wingStall(factorSurface(w, DEFAULT_PARAMS.solver), sectionProperties(w.naca).clMax)
 
 describe('wingStall', () => {
   it('puts the first section exactly at its own limit', () => {
@@ -34,7 +34,7 @@ describe('wingStall', () => {
     const w = DEFAULT_PARAMS.wing
     const limit = sectionProperties(w.naca).clMax
     const stall = stallOf(w)
-    const atStall = atAlpha(factorWing(w), stall.alphaStall)
+    const atStall = factorSurface(w, DEFAULT_PARAMS.solver).at(stall.alphaStall)
 
     const peak = Math.max(...atStall.stations.map((s) => s.cl))
     expect(peak).toBeCloseTo(limit, 6)

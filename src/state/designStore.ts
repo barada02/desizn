@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { evaluateWith, type AeroResults } from '../aero/evaluate'
-import { factorWing } from '../aero/llt'
+import { factorSurface, type SolverKind } from '../aero/solver'
 import { dragPolarWith, type DragPolar } from '../aero/polar'
 import {
   BALANCE_BOUNDS,
@@ -35,6 +35,7 @@ export interface DesignState {
   setTail: (patch: Partial<TailParams>) => void
   setBalance: (patch: Partial<BalanceParams>) => void
   setOperating: (patch: Partial<OperatingParams>) => void
+  setSolver: (solver: SolverKind) => void
   reset: () => void
 }
 
@@ -44,7 +45,7 @@ export interface DesignState {
  * twice would be pure waste.
  */
 function analyse(params: AircraftParams): { results: AeroResults; polar: DragPolar } {
-  const solution = factorWing(params.wing)
+  const solution = factorSurface(params.wing, params.solver)
   return {
     results: evaluateWith(solution, params),
     polar: dragPolarWith(solution, params),
@@ -144,6 +145,11 @@ export const useDesign = create<DesignState>((set, get) => ({
     const { params } = get()
     const operating = sanitiseOperating(patch, params.operating)
     const next: AircraftParams = { ...params, operating }
+    set({ params: next, ...analyse(next) })
+  },
+
+  setSolver: (solver) => {
+    const next: AircraftParams = { ...get().params, solver }
     set({ params: next, ...analyse(next) })
   },
 
