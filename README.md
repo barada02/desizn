@@ -12,7 +12,7 @@ you are trying to meet.
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm test         # the aero core, ~160 tests
+npm test         # the core and the design loop, ~200 tests
 npm run build    # typecheck + production build
 npm run lint
 ```
