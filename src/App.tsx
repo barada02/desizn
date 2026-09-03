@@ -1,6 +1,7 @@
 import { ChartPanel } from './charts/ChartPanel'
 import { Studio } from './scene/Studio'
 import { useDesign } from './state/designStore'
+import { BriefPanel } from './ui/BriefPanel'
 import { ControlPanel } from './ui/ControlPanel'
 import { Readouts } from './ui/Readouts'
 
@@ -41,6 +42,7 @@ function App() {
           </div>
         </div>
         <aside className="sidebar">
+          <BriefPanel />
           <ControlPanel />
         </aside>
       </div>
