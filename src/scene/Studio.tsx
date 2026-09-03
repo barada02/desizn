@@ -11,9 +11,11 @@ import { WingModel } from './WingModel'
  * sitting in the page rather than in a black box.
  */
 export function Studio({ wing }: { wing: WingParams }) {
-  // Framed off the starting span. The camera is not re-fitted afterwards: an
+  // Framed off the starting span. The results strip leaves the viewport wide
+  // and short, so horizontal room is plentiful and the wing can sit closer than
+  // a square viewport would allow. The camera is not re-fitted afterwards: an
   // orbit the user set should survive a slider drag.
-  const reach = wing.span * 0.9
+  const reach = wing.span * 0.72
 
   return (
     <Canvas

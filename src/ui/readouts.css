@@ -10,7 +10,9 @@
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  /* Fixed at two columns: four tiles then always fill two even rows. auto-fit
+     was fitting three and orphaning the fourth beside a block of dead space. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);
