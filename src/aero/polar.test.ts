@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { evaluate } from './evaluate'
 import { factorWing } from './llt'
 import { DEFAULT_PARAMS, type AircraftParams } from './params'
-import { LINEAR_SECTION_CL_LIMIT, dragPolar, dragPolarWith } from './polar'
+import { dragPolar, dragPolarWith } from './polar'
 
 const design = (over: Partial<AircraftParams> = {}): AircraftParams => ({
   wing: { ...DEFAULT_PARAMS.wing, ...over.wing },
@@ -73,7 +73,7 @@ describe('dragPolar', () => {
     const flagged = polar.points.filter((p) => p.beyondLinear)
 
     for (const point of flagged) {
-      expect(point.maxSectionCl).toBeGreaterThan(LINEAR_SECTION_CL_LIMIT)
+      expect(point.maxSectionCl).toBeGreaterThan(polar.sectionClMax)
     }
 
     if (polar.linearLimitAlpha !== null) {

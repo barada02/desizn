@@ -103,6 +103,26 @@ export function zeroLiftAlpha(s: NacaSection, intervals = 400): number {
   return -((sum * h) / 3) / Math.PI
 }
 
+/**
+ * Estimated maximum section lift coefficient.
+ *
+ * Thin airfoil theory says nothing about stall, so this is an empirical fit
+ * rather than a derivation: camber raises the peak, and sections far from about
+ * 13% thickness lose some of it - very thin ones to a sharp leading-edge stall,
+ * very thick ones to early separation.
+ *
+ * It reproduces the published values closely enough to be useful:
+ * 0012 -> 1.45, 2412 -> 1.61, 4412 -> 1.77, against roughly 1.45, 1.6 and 1.75
+ * measured near Re 3e6.
+ */
+export function sectionClMax(s: NacaSection): number {
+  const thicknessFactor = Math.max(
+    0.7,
+    1 - 25 * (s.thickness - 0.13) * (s.thickness - 0.13),
+  )
+  return (1.45 + 8 * s.camber) * thicknessFactor
+}
+
 /** Everything the lifting-line solver needs to know about the section. */
 export interface SectionProperties {
   /** a_0, per radian */
@@ -111,6 +131,8 @@ export interface SectionProperties {
   zeroLiftAlpha: number
   /** t/c */
   thicknessRatio: number
+  /** Estimated section stall, where linear theory stops being trustworthy */
+  clMax: number
 }
 
 export function sectionProperties(code: string): SectionProperties {
@@ -119,6 +141,7 @@ export function sectionProperties(code: string): SectionProperties {
     liftSlope: SECTION_LIFT_SLOPE,
     zeroLiftAlpha: zeroLiftAlpha(s),
     thicknessRatio: s.thickness,
+    clMax: sectionClMax(s),
   }
 }
 

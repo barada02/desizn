@@ -8,6 +8,7 @@
  */
 
 import { atmosphere, dynamicPressure, reynolds, type Atmosphere } from './atmosphere'
+import { sectionProperties } from './airfoil'
 import { dragBuildup, type DragBuildup } from './drag'
 import {
   atAlpha,
@@ -16,7 +17,6 @@ import {
   type SpanStation,
 } from './llt'
 import { DEG, type AircraftParams } from './params'
-import { LINEAR_SECTION_CL_LIMIT } from './polar'
 import { planform, thicknessRatio, wingLoading, type Planform } from './planform'
 
 export interface AeroResults {
@@ -59,6 +59,8 @@ export interface AeroResults {
   maxSectionCl: number
   /** True where the linear theory behind these numbers can no longer be trusted */
   beyondLinear: boolean
+  /** The section stall estimate that judgement was made against */
+  sectionClMax: number
 
   stations: SpanStation[]
 }
@@ -92,6 +94,7 @@ export function evaluateWith(
   const weight = operating.mass * 9.80665
   const clRequired = weight / (q * geometry.area)
 
+  const sectionClMax = sectionProperties(wing.naca).clMax
   let maxSectionCl = 0
   for (const station of lifting.stations) {
     const magnitude = Math.abs(station.cl)
@@ -122,7 +125,8 @@ export function evaluateWith(
     zeroLiftAlpha: lifting.zeroLiftAlpha,
     sustainsLevelFlight: lift >= weight,
     maxSectionCl,
-    beyondLinear: maxSectionCl > LINEAR_SECTION_CL_LIMIT,
+    beyondLinear: maxSectionCl > sectionClMax,
+    sectionClMax,
     stations: lifting.stations,
   }
 }

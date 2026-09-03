@@ -14,18 +14,12 @@
  * quietly drawn.
  */
 
+import { sectionProperties } from './airfoil'
 import { atAlpha, factorWing, type LiftingLineSolution } from './llt'
 import { atmosphere, reynolds } from './atmosphere'
 import { dragBuildup } from './drag'
 import { OPERATING_BOUNDS, type AircraftParams } from './params'
 import { planform, thicknessRatio } from './planform'
-
-/**
- * Section lift coefficient beyond which a NACA 4-digit section is no longer
- * behaving linearly. A rule of thumb, not a stall prediction - but drawing a
- * polar past it without saying so would be the dishonest option.
- */
-export const LINEAR_SECTION_CL_LIMIT = 1.5
 
 export interface PolarPoint {
   /** Angle of attack (deg) */
@@ -53,6 +47,8 @@ export interface DragPolar {
   cd0: number
   /** The first angle at which linear theory gives out, if it does in range */
   linearLimitAlpha: number | null
+  /** The section stall estimate this sweep was judged against */
+  sectionClMax: number
 }
 
 export interface PolarOptions {
@@ -71,6 +67,7 @@ export function dragPolarWith(
 
   const geometry = planform(wing)
   const air = atmosphere(operating.altitude)
+  const clMax = sectionProperties(wing.naca).clMax
 
   // Profile drag depends on Reynolds number and shape, not on incidence, so it
   // is the same at every point of the sweep.
@@ -100,7 +97,7 @@ export function dragPolarWith(
       cdi: lift.cdi,
       liftToDrag: cd > 0 ? lift.cl / cd : 0,
       maxSectionCl,
-      beyondLinear: maxSectionCl > LINEAR_SECTION_CL_LIMIT,
+      beyondLinear: maxSectionCl > clMax,
     }
   }
 
@@ -126,6 +123,7 @@ export function dragPolarWith(
     current: pointAt(operating.alpha),
     cd0,
     linearLimitAlpha: firstBeyond ? firstBeyond.alpha : null,
+    sectionClMax: clMax,
   }
 }
 
