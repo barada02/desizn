@@ -1,7 +1,7 @@
 import { Grid, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import type { WingParams } from '../aero/params'
-import { WingModel } from './WingModel'
+import type { BalanceParams, TailParams, WingParams } from '../aero/params'
+import { Airframe } from './Airframe'
 
 /**
  * The viewport.
@@ -10,12 +10,22 @@ import { WingModel } from './WingModel'
  * through, which saves painting the same colour twice and keeps the wing
  * sitting in the page rather than in a black box.
  */
-export function Studio({ wing }: { wing: WingParams }) {
+export function Studio({
+  wing,
+  tail,
+  balance,
+  neutralPoint,
+}: {
+  wing: WingParams
+  tail: TailParams
+  balance: BalanceParams
+  neutralPoint: number
+}) {
   // Framed off the starting span. The results strip leaves the viewport wide
   // and short, so horizontal room is plentiful and the wing can sit closer than
   // a square viewport would allow. The camera is not re-fitted afterwards: an
   // orbit the user set should survive a slider drag.
-  const reach = wing.span * 0.72
+  const reach = Math.max(wing.span, tail.arm * 1.6) * 0.72
 
   return (
     <Canvas
@@ -26,7 +36,12 @@ export function Studio({ wing }: { wing: WingParams }) {
       <directionalLight position={[6, 12, 8]} intensity={2.1} />
       <directionalLight position={[-9, 4, -6]} intensity={0.5} color="#7fd4dc" />
 
-      <WingModel wing={wing} />
+      <Airframe
+        wing={wing}
+        tail={tail}
+        balance={balance}
+        neutralPoint={neutralPoint}
+      />
 
       <Grid
         position={[0, -2.4, 0]}
@@ -48,7 +63,7 @@ export function Studio({ wing }: { wing: WingParams }) {
         enablePan
         minDistance={1.5}
         maxDistance={140}
-        target={[0, 0, 0]}
+        target={[0, 0, tail.arm * 0.3]}
       />
     </Canvas>
   )
