@@ -2,7 +2,9 @@ import { ChartPanel } from './charts/ChartPanel'
 import { Studio } from './scene/Studio'
 import { useDesign } from './state/designStore'
 import { BriefPanel } from './ui/BriefPanel'
+import { ComparePanel } from './ui/ComparePanel'
 import { ControlPanel } from './ui/ControlPanel'
+import { LibraryPanel } from './ui/LibraryPanel'
 import { Readouts } from './ui/Readouts'
 
 function App() {
@@ -39,10 +41,12 @@ function App() {
           <div className="results">
             <ChartPanel />
             <Readouts />
+            <ComparePanel />
           </div>
         </div>
         <aside className="sidebar">
           <BriefPanel />
+          <LibraryPanel />
           <ControlPanel />
         </aside>
       </div>
