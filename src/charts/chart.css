@@ -153,3 +153,69 @@
 .chart-foot .caveat {
   color: var(--warn);
 }
+
+/* --- flight envelope ---------------------------------------------- */
+
+.chart .envelope-area {
+  fill: var(--accent);
+  opacity: 0.1;
+}
+
+.chart .envelope-edge {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.chart .speed-mark {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.chart .marker-outside {
+  fill: var(--warn);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.key-current {
+  fill: var(--accent);
+}
+
+/* --- tabs --------------------------------------------------------- */
+
+.chart-panel {
+  flex: 1 1 340px;
+  max-width: 470px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chart-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.chart-tabs button {
+  padding: 5px 10px 6px;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.chart-tabs button:hover {
+  color: var(--ink-2);
+}
+
+.chart-tabs button[aria-selected='true'] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
