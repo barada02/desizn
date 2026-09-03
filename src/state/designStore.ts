@@ -1,7 +1,10 @@
 import { create } from 'zustand'
-import { evaluateWith, type AeroResults } from '../aero/evaluate'
-import { factorSurface, type SolverKind } from '../aero/solver'
-import { dragPolarWith, type DragPolar } from '../aero/polar'
+import type { AeroResults } from '../aero/evaluate'
+import type { SolverKind } from '../aero/solver'
+import type { DragPolar } from '../aero/polar'
+import { DEFAULT_BRIEF, briefById } from '../design/briefs'
+import { checkBrief, type BriefCheck } from '../design/requirements'
+import { analyse } from '../design/snapshot'
 import {
   BALANCE_BOUNDS,
   DEFAULT_PARAMS,
@@ -31,25 +34,23 @@ export interface DesignState {
   params: AircraftParams
   results: AeroResults
   polar: DragPolar
+  /** The brief being designed against */
+  briefId: string
+  /** How the current design measures up to it */
+  brief: BriefCheck
   setWing: (patch: Partial<WingParams>) => void
   setTail: (patch: Partial<TailParams>) => void
   setBalance: (patch: Partial<BalanceParams>) => void
   setOperating: (patch: Partial<OperatingParams>) => void
   setSolver: (solver: SolverKind) => void
+  setBrief: (briefId: string) => void
   reset: () => void
 }
 
-/**
- * One factorisation feeds both the point results and the whole polar sweep -
- * the expensive part of the solve depends only on the wing's shape, so doing it
- * twice would be pure waste.
- */
-function analyse(params: AircraftParams): { results: AeroResults; polar: DragPolar } {
-  const solution = factorSurface(params.wing, params.solver)
-  return {
-    results: evaluateWith(solution, params),
-    polar: dragPolarWith(solution, params),
-  }
+/** Re-evaluate the design and re-check it against whichever brief is active. */
+function refresh(params: AircraftParams, briefId: string) {
+  const snapshot = analyse(params)
+  return { ...snapshot, briefId, brief: checkBrief(briefById(briefId), snapshot) }
 }
 
 /** Hold an incoming patch inside the declared bounds before it reaches state. */
@@ -116,42 +117,42 @@ function sanitiseOperating(
 }
 
 export const useDesign = create<DesignState>((set, get) => ({
-  params: DEFAULT_PARAMS,
-  ...analyse(DEFAULT_PARAMS),
+  ...refresh(DEFAULT_PARAMS, DEFAULT_BRIEF),
 
   setWing: (patch) => {
     const { params } = get()
     const wing = sanitiseWing(patch, params.wing)
-    const next: AircraftParams = { ...params, wing }
-    set({ params: next, ...analyse(next) })
+    set(refresh({ ...params, wing }, get().briefId))
   },
 
   setTail: (patch) => {
     const { params } = get()
-    const next: AircraftParams = { ...params, tail: sanitiseTail(patch, params.tail) }
-    set({ params: next, ...analyse(next) })
+    set(refresh({ ...params, tail: sanitiseTail(patch, params.tail) }, get().briefId))
   },
 
   setBalance: (patch) => {
     const { params } = get()
-    const next: AircraftParams = {
-      ...params,
-      balance: sanitiseBalance(patch, params.balance),
-    }
-    set({ params: next, ...analyse(next) })
+    set(
+      refresh(
+        { ...params, balance: sanitiseBalance(patch, params.balance) },
+        get().briefId,
+      ),
+    )
   },
 
   setOperating: (patch) => {
     const { params } = get()
     const operating = sanitiseOperating(patch, params.operating)
-    const next: AircraftParams = { ...params, operating }
-    set({ params: next, ...analyse(next) })
+    set(refresh({ ...params, operating }, get().briefId))
   },
 
   setSolver: (solver) => {
-    const next: AircraftParams = { ...get().params, solver }
-    set({ params: next, ...analyse(next) })
+    set(refresh({ ...get().params, solver }, get().briefId))
   },
 
-  reset: () => set({ params: DEFAULT_PARAMS, ...analyse(DEFAULT_PARAMS) }),
+  setBrief: (briefId) => {
+    set(refresh(get().params, briefId))
+  },
+
+  reset: () => set(refresh(DEFAULT_PARAMS, get().briefId)),
 }))
